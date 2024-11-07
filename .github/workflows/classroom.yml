@@ -1,8 +1,7 @@
-name: Banking System Configuration Check
-on:
-  push:
-  workflow_dispatch:
-  repository_dispatch:
+name: Autograding Tests
+'on':
+- workflow_dispatch
+- repository_dispatch
 permissions:
   checks: write
   actions: read
@@ -12,33 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor != 'github-classroom[bot]'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: List files
-        run: ls -R
-
-      - name: Run tests
-        id: run-tests
-        uses: classroom-resources/autograding-command-grader@v1
-        with:
-          test-name: Run Tests
-          command: "jupyter nbconvert --to script *.ipynb && pytest"
-          timeout: 10
-          max-score: 40
-
-      - name: Autograding Reporter
-        uses: classroom-resources/autograding-grading-reporter@v1
-        env:
-          RUN_TESTS_RESULTS: "${{ steps.run-tests.outputs.result }}"
-        with:
-          runners: run-tests
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Python test
+      id: python-test
+      uses: classroom-resources/autograding-python-grader@v1
+      with:
+        timeout: 10
+        max-score: 40
+        setup-command: pip install -r requirements.txt && jupyter nbconvert --to script
+          *.ipynb
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        PYTHON-TEST_RESULTS: "${{steps.python-test.outputs.result}}"
+      with:
+        runners: python-test
