@@ -1,8 +1,8 @@
 name: Banking System Configuration Check
 on:
-  - push
-  - workflow_dispatch
-  - repository_dispatch
+  push:
+  workflow_dispatch:
+  repository_dispatch:
 permissions:
   checks: write
   actions: read
@@ -12,26 +12,33 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor != 'github-classroom[bot]'
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      # This is where you place your autograding tests
-      # For more information on this runner, see the documentation at: https://github.com/classroom-resources/autograding-io-grader
-      #
-      # For example, you could run a test suite like this:
-    - name: Run tests
-      id: run-tests
-      uses: classroom-resources/autograding-command-grader@v1
-      with:
-        test-name: Run Tests
-        command: "jupyter nbconvert --to script *.ipynb && pytest"
-        timeout: 10
-        max-score: 40
-    - name: Autograding Reporter
-      uses: classroom-resources/autograding-grading-reporter@v1
-      # For more information on this runner, see the documentation at https://github.com/classroom-resources/autograding-grading-reporter
-      # To output the results of the tests, you can use the
-      # autograding-grading-reporter action like this:
-      env:
-        RUN-TESTS_RESULTS: "${{steps.run-tests.outputs.result}}"
-      with:
-        runners: run-tests
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: List files
+        run: ls -R
+
+      - name: Run tests
+        id: run-tests
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Run Tests
+          command: "jupyter nbconvert --to script *.ipynb && pytest"
+          timeout: 10
+          max-score: 40
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          RUN_TESTS_RESULTS: "${{ steps.run-tests.outputs.result }}"
+        with:
+          runners: run-tests
